@@ -1,0 +1,109 @@
+<template>
+  <div class="screen">
+    <text class="eyebrow">专注进行中</text>
+    <text class="topic">{{ topic }}</text>
+    <div class="timer-ring">
+      <text class="time">{{ timeText }}</text>
+      <text class="phase">{{ running ? '保持单一任务' : '已暂停' }}</text>
+    </div>
+    <a if="{{ missingPlan }}" class="redirect" href="/pages/plan">创建计划</a>
+    <div elif="{{ completed }}" class="controls done-controls">
+      <a class="primary done" href="/pages/quiz">开始回忆</a>
+    </div>
+    <div else class="controls">
+      <div class="secondary" onclick="toggle"><text>{{ running ? '暂停' : '继续' }}</text></div>
+      <div class="primary" onclick="complete"><text>完成</text></div>
+    </div>
+  </div>
+</template>
+
+<script>
+import vibrator from '@system.vibrator';
+import store from '../../common/store.js';
+import scheduler from '../../common/scheduler.js';
+
+function format(seconds) {
+  const mins = Math.floor(seconds / 60);
+  const secs = seconds % 60;
+  return `${mins < 10 ? '0' : ''}${mins}:${secs < 10 ? '0' : ''}${secs}`;
+}
+
+function safeVibrate(mode) {
+  try {
+    if (vibrator && typeof vibrator.vibrate === 'function') {
+      vibrator.vibrate({ mode, complete() {} });
+    }
+  } catch (error) {
+    console.log('FocusLoop vibration unavailable:', error);
+  }
+}
+
+export default {
+  private: {
+    topic: '',
+    remaining: 25 * 60,
+    timeText: '25:00',
+    running: true,
+    timer: null,
+    completing: false,
+    completed: false,
+    missingPlan: false,
+    state: null,
+  },
+  async onReady() {
+    this.state = await store.load();
+    if (!this.state.plan) {
+      this.missingPlan = true;
+      this.running = false;
+      return;
+    }
+    this.topic = this.state.plan.topic;
+    this.remaining = this.state.plan.sessionMinutes * 60;
+    this.timeText = format(this.remaining);
+    this.timer = setInterval(() => this.tick(), 1000);
+  },
+  onDestroy() {
+    if (this.timer) clearInterval(this.timer);
+  },
+  tick() {
+    if (!this.running) return;
+    this.remaining = Math.max(0, this.remaining - 1);
+    this.timeText = format(this.remaining);
+    if (this.remaining === 0) this.complete();
+  },
+  toggle() { this.running = !this.running; },
+  async complete() {
+    if (this.completing) return;
+    this.completing = true;
+    this.running = false;
+    if (this.timer) clearInterval(this.timer);
+    safeVibrate('long');
+    const plan = Object.assign({}, this.state.plan, {
+      sessionsCompleted: Number(this.state.plan.sessionsCompleted || 0) + 1,
+    });
+    const card = scheduler.nextDueCard(plan, Date.now());
+    await store.save(Object.assign({}, this.state, {
+      version: 3,
+      plan,
+      currentCardId: card ? card.id : '',
+      lastSessionAt: Date.now(),
+    }));
+    this.completed = true;
+  },
+};
+</script>
+
+<style>
+.screen { width: 480px; height: 480px; padding: 42px 52px 32px; flex-direction: column; align-items: center; background-color: #101311; color: #ffffff; }
+.eyebrow { font-size: 18px; color: #9da49d; }
+.topic { margin-top: 6px; width: 340px; font-size: 28px; font-weight: 700; text-align: center; lines: 1; text-overflow: ellipsis; }
+.timer-ring { margin-top: 14px; width: 220px; height: 220px; border-width: 8px; border-color: #d8ff58; border-radius: 110px; flex-direction: column; align-items: center; justify-content: center; background-color: #171c18; }
+.time { font-size: 56px; font-weight: 700; color: #ffffff; }
+.phase { margin-top: 8px; font-size: 17px; color: #aeb5ad; }
+.controls { margin-top: 18px; width: 280px; height: 52px; flex-direction: row; justify-content: space-between; }
+.secondary { width: 130px; height: 52px; border-width: 1px; border-color: #465047; border-radius: 8px; justify-content: center; align-items: center; font-size: 20px; color: #d9ddd8; }
+.primary { width: 130px; height: 52px; border-radius: 8px; justify-content: center; align-items: center; background-color: #d8ff58; font-size: 20px; font-weight: 700; text-align: center; color: #111510; }
+.done-controls { justify-content: center; }
+.done { width: 210px; }
+.redirect { margin-top: 18px; width: 210px; height: 52px; border-radius: 8px; justify-content: center; align-items: center; background-color: #d8ff58; font-size: 20px; font-weight: 700; text-align: center; color: #111510; }
+</style>

@@ -1,0 +1,48 @@
+#!/bin/sh
+
+set -eu
+
+remote_name="$1"
+zero_sha="0000000000000000000000000000000000000000"
+approval_file="$(git rev-parse --git-path ai-log-upload-approved-sha)"
+approved_sha=""
+approval_used=0
+
+if [ -f "$approval_file" ]; then
+  approved_sha="$(tr -d '\r\n' < "$approval_file")"
+fi
+
+while read -r local_ref local_sha remote_ref remote_sha; do
+  if [ "$local_sha" = "$zero_sha" ]; then
+    continue
+  fi
+
+  commit_sha="$(git rev-parse "$local_sha^{commit}")"
+  if [ "$remote_sha" = "$zero_sha" ]; then
+    new_commits="$(git rev-list "$commit_sha" --not --remotes="$remote_name")"
+  else
+    new_commits="$(git rev-list "$commit_sha" "^$remote_sha")"
+  fi
+
+  contains_logs=0
+  for commit in $new_commits; do
+    if git diff-tree --root --no-commit-id --name-only -r "$commit" | grep -q '^logs/'; then
+      contains_logs=1
+      break
+    fi
+  done
+
+  if [ "$contains_logs" -eq 1 ]; then
+    if [ "$approved_sha" != "$local_sha" ]; then
+      echo "BLOCKED: this push includes AI interaction logs under logs/." >&2
+      echo "Review every affected JSONL file and obtain explicit user approval for commit $local_sha." >&2
+      echo "After approval, write that exact SHA to $approval_file for one push attempt." >&2
+      exit 1
+    fi
+    approval_used=1
+  fi
+done
+
+if [ "$approval_used" -eq 1 ]; then
+  rm -f "$approval_file"
+fi

@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" role="img" aria-label="FocusLoop logo">
+  <rect width="512" height="512" rx="96" fill="#101311"/>
+  <circle cx="256" cy="256" r="158" fill="none" stroke="#d8ff58" stroke-width="38" stroke-linecap="round" stroke-dasharray="778 215" transform="rotate(-42 256 256)"/>
+  <path d="M392 112v98h-98" fill="none" stroke="#d8ff58" stroke-width="38" stroke-linecap="round" stroke-linejoin="round"/>
+  <rect x="151" y="185" width="210" height="156" rx="24" fill="#f4f7f2"/>
+  <rect x="178" y="217" width="156" height="18" rx="9" fill="#101311"/>
+  <rect x="178" y="254" width="106" height="18" rx="9" fill="#101311"/>
+  <path d="M287 306l25 18 40-55" fill="none" stroke="#f6b94a" stroke-width="20" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="130" cy="368" r="20" fill="#f6b94a"/>
+</svg>

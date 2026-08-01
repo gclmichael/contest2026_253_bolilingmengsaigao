@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>FocusLoop UI states</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; background: #e9ede7; color: #fff; font-family: "Microsoft YaHei", "Noto Sans SC", sans-serif; }
+    main { width: 1080px; min-height: 1080px; padding: 48px; display: grid; grid-template-columns: 466px 466px; grid-template-rows: 466px 466px; gap: 52px; }
+    .watch { position: relative; width: 466px; height: 466px; overflow: hidden; border-radius: 50%; background: #101311; box-shadow: 0 14px 30px rgba(16, 19, 17, .18); }
+    .screen { width: 100%; height: 100%; padding: 44px 54px 34px; display: flex; flex-direction: column; }
+    .header { display: flex; align-items: center; justify-content: center; }
+    .row, .buttons, .durations { display: flex; align-items: center; justify-content: space-between; }
+    .brand { color: #d8ff58; font-size: 27px; font-weight: 700; }
+    .muted { color: #9da49d; font-size: 17px; }
+    .eyebrow { color: #909990; font-size: 17px; margin-top: 12px; }
+    h1, h2, p { margin: 0; letter-spacing: 0; }
+    h1 { margin-top: 3px; font-size: 34px; line-height: 42px; }
+    h2 { font-size: 30px; line-height: 38px; }
+    .plan-title { text-align: center; }
+    .objective { margin-top: 5px; height: 43px; color: #c9cec7; font-size: 17px; line-height: 22px; }
+    .progress { margin-top: 14px; display: flex; align-items: center; }
+    .track { width: 278px; height: 8px; border-radius: 4px; background: #303631; overflow: hidden; }
+    .fill { width: 72%; height: 100%; background: #d8ff58; }
+    .percent { margin-left: 14px; color: #d8ff58; font-size: 17px; }
+    .next { margin-top: 14px; }
+    .next strong { display: block; margin-top: 2px; font-size: 23px; }
+    button { height: 48px; padding: 0 18px; border: 1px solid #3e463f; border-radius: 8px; background: transparent; color: #d5d9d3; font: inherit; font-size: 17px; }
+    button.primary { border: 0; background: #d8ff58; color: #111510; font-weight: 700; }
+    .buttons { margin-top: 15px; gap: 10px; }
+    .buttons button { flex: 1; }
+    .buttons .amber { border-color: #f6b84a; color: #f6b84a; }
+    .status { margin-top: 7px; color: #9da49d; font-size: 14px; text-align: center; }
+    label { margin-top: 10px; color: #9da49d; font-size: 17px; }
+    .input { margin-top: 5px; height: 50px; padding: 12px 15px; border: 1px solid #424a43; border-radius: 8px; background: #1c211d; font-size: 19px; }
+    .presets { margin-top: 8px; display: flex; gap: 10px; }
+    .presets span { flex: 1; height: 36px; border-radius: 8px; background: #242a25; color: #cdd2cb; font-size: 15px; display: grid; place-items: center; }
+    .durations { margin-top: 5px; gap: 10px; }
+    .duration { flex: 1; height: 42px; border: 1px solid #3d453e; border-radius: 8px; display: grid; place-items: center; color: #aab1aa; }
+    .duration.selected { border-color: #d8ff58; background: #253016; color: #d8ff58; }
+    .plan-primary { width: 100%; margin-top: 16px; }
+    .center { align-items: center; text-align: center; }
+    .center .eyebrow { margin-top: 0; }
+    .topic-small { width: 340px; margin-top: 4px; font-size: 27px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .timer { width: 216px; height: 216px; margin-top: 14px; border: 8px solid #d8ff58; border-radius: 50%; background: #171c18; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+    .time { font-size: 54px; font-weight: 700; }
+    .phase { margin-top: 6px; color: #aeb5ad; font-size: 16px; }
+    .focus-buttons { width: 280px; }
+    .quiz { padding-top: 56px; }
+    .quiz .eyebrow { margin-top: 0; color: #d8ff58; text-align: center; }
+    .question { width: 340px; margin: 6px auto 0; height: 68px; font-size: 24px; line-height: 30px; font-weight: 700; text-align: center; }
+    .options { margin-top: 10px; display: flex; flex-direction: column; gap: 8px; }
+    .option { height: 52px; padding: 0 16px; border: 1px solid #3e463f; border-radius: 8px; background: #1b201c; display: flex; align-items: center; font-size: 18px; }
+    .feedback { width: 250px; margin: 4px auto 0; color: #f6b84a; font-size: 15px; line-height: 20px; text-align: center; }
+  </style>
+</head>
+<body>
+  <main>
+    <section class="watch"><div class="screen">
+      <div class="header"><span class="brand">FocusLoop</span></div>
+      <span class="eyebrow">当前主题</span><h1>openvela 核心架构</h1>
+      <p class="objective">建立可回忆的系统分层与组件关系</p>
+      <div class="progress"><div class="track"><div class="fill"></div></div><span class="percent">72%</span></div>
+      <div class="row next"><div><span class="muted">下次回忆</span><strong>现在可复习</strong></div><button class="primary">立即复习</button></div>
+      <div class="buttons"><button>调整计划</button><button class="amber">60秒提醒</button></div>
+      <span class="status">下次提醒已同步</span>
+    </div></section>
+
+    <section class="watch"><div class="screen">
+      <h2 class="plan-title">创建学习闭环</h2><label>学习主题</label>
+      <div class="input">openvela 核心架构</div>
+      <div class="presets"><span>openvela 架构</span><span>英语表达</span></div>
+      <label>单次专注</label><div class="durations"><div class="duration">15</div><div class="duration selected">25</div><div class="duration">40</div></div>
+      <button class="primary plan-primary">生成计划</button><span class="status">端侧 Agent 已就绪</span>
+    </div></section>
+
+    <section class="watch"><div class="screen center">
+      <span class="eyebrow">专注进行中</span><h2 class="topic-small">openvela 核心架构</h2>
+      <div class="timer"><span class="time">24:36</span><span class="phase">保持单一任务</span></div>
+      <div class="buttons focus-buttons"><button>暂停</button><button class="primary">完成</button></div>
+    </div></section>
+
+    <section class="watch"><div class="screen quiz">
+      <span class="eyebrow">主动回忆</span><p class="question">openvela 中，应用与内核能力之间的主要边界是什么？</p>
+      <div class="options"><div class="option">系统服务与标准接口</div><div class="option">只通过共享全局变量</div><div class="option">应用直接访问全部驱动</div></div>
+      <p class="feedback">系统服务提供受控能力边界，便于移植、隔离与复用。</p>
+    </div></section>
+  </main>
+</body>
+</html>

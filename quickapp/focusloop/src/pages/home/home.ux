@@ -1,0 +1,156 @@
+<template>
+  <div class="screen">
+    <div class="header">
+      <text class="brand">FocusLoop</text>
+    </div>
+
+    <div if="{{ hasPlan }}" class="main">
+      <text class="eyebrow">当前主题</text>
+      <text class="topic">{{ topic }}</text>
+      <text class="objective">{{ objective }}</text>
+
+      <div class="progress-row">
+        <div class="progress-track">
+          <div class="progress-fill" style="width: {{ progressWidth }};"></div>
+        </div>
+        <text class="progress-text">{{ progress }}%</text>
+      </div>
+
+      <div class="next-row">
+        <div>
+          <text class="eyebrow">下次回忆</text>
+          <text class="next-time">{{ nextDue }}</text>
+        </div>
+        <a if="{{ reviewDue }}" class="primary" href="/pages/quiz">{{ startLabel }}</a>
+        <a else class="primary" href="/pages/focus">{{ startLabel }}</a>
+      </div>
+
+      <div class="actions">
+        <a class="action" href="/pages/plan">计划</a>
+        <a class="action smart" href="/pages/context">智能窗口</a>
+        <div class="action accent" onclick="demoReminder"><text class="accent-text">60秒</text></div>
+      </div>
+      <text class="status">{{ status }}</text>
+    </div>
+
+    <div else class="empty">
+      <text class="empty-title">把目标变成每天能完成的一小步</text>
+      <text class="empty-copy">AI 规划专注与主动回忆，腕上完成闭环。</text>
+      <a class="primary wide" href="/pages/plan">创建学习计划</a>
+    </div>
+  </div>
+</template>
+
+<script>
+import store from '../../common/store.js';
+import scheduler from '../../common/scheduler.js';
+import agent from '../../common/agent.js';
+
+export default {
+  private: {
+    hasPlan: false,
+    topic: '',
+    objective: '',
+    progress: 0,
+    progressWidth: '0%',
+    nextDue: '',
+    status: '',
+    startLabel: '开始专注',
+    reviewDue: false,
+    syncing: false,
+    state: null,
+  },
+  onShow() {
+    this.refresh();
+  },
+  async refresh() {
+    this.state = await store.load();
+    const plan = this.state.plan;
+    this.hasPlan = !!plan;
+    this.reviewDue = false;
+    if (!plan) return;
+    this.topic = plan.topic;
+    this.objective = plan.objective;
+    this.progress = scheduler.progressPercent(plan);
+    this.progressWidth = `${this.progress}%`;
+    this.nextDue = scheduler.relativeTime(plan.nextDueAt, Date.now());
+    this.reviewDue = Number(plan.sessionsCompleted || 0) > 0
+      && Number(plan.nextDueAt || 0) <= Date.now();
+    this.startLabel = this.reviewDue
+      ? '立即复习'
+      : '开始专注';
+    if (this.state.settings.smartReviewEnabled
+        && this.state.context.lastReason === 'ready') {
+      this.status = '已发现低压力复习窗口';
+    }
+    if (plan.pendingScheduleAt) this.syncSchedule(plan);
+  },
+  async syncSchedule(plan) {
+    if (this.syncing) return;
+    const pendingAt = Number(plan.pendingScheduleAt || 0);
+    if (!pendingAt) return;
+    this.syncing = true;
+    if (pendingAt <= Date.now()) {
+      const currentPlan = Object.assign({}, plan, { pendingScheduleAt: 0 });
+      this.state = Object.assign({}, this.state, { plan: currentPlan });
+      await store.save(this.state);
+      this.status = '复习时间已到';
+      this.syncing = false;
+      return;
+    }
+    this.status = '正在同步下次提醒...';
+    try {
+      await agent.scheduleLaunch(plan, pendingAt);
+      const latest = await store.load();
+      if (latest.plan && Number(latest.plan.pendingScheduleAt || 0) === pendingAt) {
+        latest.plan = Object.assign({}, latest.plan, { pendingScheduleAt: 0 });
+        await store.save(latest);
+        this.state = latest;
+      }
+      this.status = '下次提醒已同步';
+    } catch (error) {
+      this.status = '提醒待网络恢复后重试';
+    }
+    this.syncing = false;
+  },
+  async demoReminder() {
+    if (!this.state || !this.state.plan) return;
+    this.status = '正在安排...';
+    try {
+      await agent.scheduleLaunch(this.state.plan, Date.now() + 60000);
+      this.status = '已安排 60 秒后的主动复习';
+    } catch (error) {
+      this.status = 'Agent 暂不可用';
+    }
+  },
+};
+</script>
+
+<style>
+.screen { width: 480px; height: 480px; padding: 42px 54px 30px; flex-direction: column; background-color: #101311; color: #f4f6f0; }
+.header { height: 44px; flex-direction: row; justify-content: center; align-items: center; }
+.brand { font-size: 28px; font-weight: 700; color: #d8ff58; }
+.main { flex: 1; flex-direction: column; padding-top: 10px; }
+.eyebrow { font-size: 18px; color: #909990; }
+.topic { margin-top: 4px; font-size: 36px; font-weight: 700; color: #ffffff; lines: 1; text-overflow: ellipsis; }
+.objective { margin-top: 6px; height: 44px; font-size: 18px; line-height: 22px; color: #c9cec7; lines: 2; text-overflow: ellipsis; }
+.progress-row { margin-top: 12px; height: 24px; flex-direction: row; align-items: center; }
+.progress-track { width: 290px; height: 8px; border-radius: 4px; background-color: #303631; }
+.progress-fill { height: 8px; border-radius: 4px; background-color: #d8ff58; }
+.progress-text { width: 56px; margin-left: 12px; font-size: 18px; color: #d8ff58; text-align: right; }
+.next-row { margin-top: 14px; height: 64px; flex-direction: row; align-items: center; justify-content: space-between; }
+.next-time { margin-top: 4px; font-size: 24px; color: #ffffff; }
+.primary { width: 108px; height: 52px; border-radius: 8px; background-color: #d8ff58; justify-content: center; align-items: center; font-size: 19px; font-weight: 700; text-align: center; color: #111510; }
+.primary-text { font-size: 19px; font-weight: 700; color: #111510; }
+.actions { margin-top: 14px; height: 46px; flex-direction: row; justify-content: space-between; }
+.action { width: 112px; height: 46px; border-width: 1px; border-color: #3e463f; border-radius: 8px; justify-content: center; align-items: center; font-size: 16px; text-align: center; color: #d5d9d3; }
+.smart { border-color: #6a8f72; color: #b9dfbe; }
+.accent { border-color: #f6b84a; }
+.action-text { font-size: 18px; color: #d5d9d3; }
+.accent-text { font-size: 18px; color: #f6b84a; }
+.status { margin-top: 6px; height: 20px; font-size: 15px; color: #9da49d; text-align: center; }
+.empty { flex: 1; padding-top: 54px; flex-direction: column; align-items: center; }
+.empty-title { width: 340px; font-size: 32px; line-height: 40px; font-weight: 700; text-align: center; color: #ffffff; }
+.empty-copy { width: 330px; margin-top: 18px; font-size: 20px; line-height: 28px; text-align: center; color: #aeb5ad; }
+.wide { width: 230px; margin-top: 34px; }
+</style>

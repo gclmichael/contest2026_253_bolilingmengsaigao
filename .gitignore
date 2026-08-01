@@ -1,0 +1,28 @@
+# Build outputs
+build/
+out/
+cmake_out/
+node_modules/
+coverage/
+__pycache__/
+docs/report/assets/
+docs/report/rendered/
+docs/report/FocusLoop_技术报告_可编辑备份.docx
+docs/video/*.wav
+docs/video/audio/
+submission/
+*.o
+*.a
+*.elf
+*.hex
+*.map
+*.rpk
+!artifacts/*.rpk
+quickapp/*/sign/
+
+# Local tooling
+.idea/
+.vscode/
+*.log
+
+# AI logs remain visible for explicit review and submission.

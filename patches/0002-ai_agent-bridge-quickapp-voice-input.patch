@@ -1,0 +1,97 @@
+From c0a82e8ea0d58f6b8735024f3d06a4bc5eb6cfaf Mon Sep 17 00:00:00 2001
+From: gclmichael <gclmichael@whu.edu.cn>
+Date: Fri, 31 Jul 2026 20:00:53 +0800
+Subject: [PATCH 2/2] ai_agent: bridge quickapp voice input
+
+Signed-off-by: gclmichael <gclmichael@whu.edu.cn>
+---
+ src/agent_main.c | 61 ++++++++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 61 insertions(+)
+
+diff --git a/src/agent_main.c b/src/agent_main.c
+index 9d676c2..841e1f6 100644
+--- a/src/agent_main.c
++++ b/src/agent_main.c
+@@ -212,11 +212,68 @@ static void* network_watch_task(void* arg)
+ #include <mqueue.h>
+ #include <fcntl.h>
+ #include <errno.h>
++#include <netutils/cJSON.h>
+ 
+ #define VELACLAW_MQ_QAPP_IN   "/velaclaw_qapp_in"
+ #define VELACLAW_MQ_QAPP_OUT  "/velaclaw_qapp_out"
+ #define VELACLAW_MQ_MSG_SIZE  4096
+ #define VELACLAW_MQ_MAX_MSGS  4
++#define VELACLAW_QAPP_VOICE_START "[AGENT:VOICE_START]"
++#define VELACLAW_QAPP_VOICE_STOP  "[AGENT:VOICE_STOP]"
++
++static void quickapp_mq_dispatch(const char *chat_id, const char *content);
++
++static bool quickapp_handle_voice_command(const char *chat_id,
++                                          const char *query)
++{
++    if (strcmp(query, VELACLAW_QAPP_VOICE_START) != 0
++        && strcmp(query, VELACLAW_QAPP_VOICE_STOP) != 0) {
++        return false;
++    }
++
++    cJSON *result = cJSON_CreateObject();
++    if (!result) {
++        quickapp_mq_dispatch(chat_id,
++            "{\"voice\":\"error\",\"reason\":\"out of memory\"}");
++        return true;
++    }
++
++    if (strcmp(query, VELACLAW_QAPP_VOICE_START) == 0) {
++        int ret = voice_channel_start();
++        if (ret == OK) {
++            cJSON_AddStringToObject(result, "voice", "started");
++        } else {
++            cJSON_AddStringToObject(result, "voice", "error");
++            cJSON_AddStringToObject(result, "reason",
++                "voice recording could not start");
++            cJSON_AddNumberToObject(result, "code", ret);
++        }
++    } else {
++        char transcript[512] = {0};
++        int ret = voice_channel_stop_with_text(transcript,
++                                                sizeof(transcript));
++        if (ret == OK && transcript[0]) {
++            cJSON_AddStringToObject(result, "voice", "result");
++            cJSON_AddStringToObject(result, "text", transcript);
++        } else {
++            cJSON_AddStringToObject(result, "voice", "error");
++            cJSON_AddStringToObject(result, "reason",
++                transcript[0] ? transcript : "voice recognition returned no text");
++            cJSON_AddNumberToObject(result, "code", ret);
++        }
++    }
++
++    char *payload = cJSON_PrintUnformatted(result);
++    cJSON_Delete(result);
++    if (payload) {
++        quickapp_mq_dispatch(chat_id, payload);
++        free(payload);
++    } else {
++        quickapp_mq_dispatch(chat_id,
++            "{\"voice\":\"error\",\"reason\":\"response encoding failed\"}");
++    }
++    return true;
++}
+ 
+ /**
+  * Reads requests from the quickapp process via POSIX mqueue and feeds
+@@ -269,6 +326,10 @@ static void *quickapp_mq_listener_task(void *arg)
+         syslog(LOG_INFO, "[%s] Quickapp request: chat_id=%s query=%.40s\n",
+                TAG, chat_id, query);
+ 
++        if (quickapp_handle_voice_command(chat_id, query)) {
++            continue;
++        }
++
+         agent_msg_t msg = {0};
+         strncpy(msg.channel, AGENT_CHAN_QUICKAPP, sizeof(msg.channel) - 1);
+         strncpy(msg.chat_id, chat_id, sizeof(msg.chat_id) - 1);
+-- 
+2.34.1
+

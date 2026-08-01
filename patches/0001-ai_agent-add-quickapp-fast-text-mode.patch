@@ -1,0 +1,145 @@
+From 2079bebc2cd5f1e86545500cf2f55a360b4ddf94 Mon Sep 17 00:00:00 2001
+From: gclmichael <gclmichael@whu.edu.cn>
+Date: Fri, 31 Jul 2026 12:00:41 +0800
+Subject: [PATCH 1/2] ai_agent: add quickapp fast text mode
+
+Signed-off-by: gclmichael <gclmichael@whu.edu.cn>
+---
+ src/core/agent_loop.c | 32 +++++++++++++++++++++++++++++---
+ src/llm/llm_proxy.c   | 23 ++++++++++++++++++-----
+ src/llm/llm_proxy.h   |  7 +++++++
+ 3 files changed, 54 insertions(+), 8 deletions(-)
+
+diff --git a/src/core/agent_loop.c b/src/core/agent_loop.c
+index 3d9dec3..28bab65 100644
+--- a/src/core/agent_loop.c
++++ b/src/core/agent_loop.c
+@@ -884,6 +884,22 @@ static const char* s_working_phrases[] = {
+ #define WORKING_PHRASE_COUNT \
+     ((int)(sizeof(s_working_phrases) / sizeof(s_working_phrases[0])))
+ 
++#define FAST_TEXT_PREFIX "[AGENT:FAST_TEXT]"
++#define FAST_TEXT_MAX_TOKENS 1536
++
++static bool is_fast_text_request(const agent_msg_t* msg)
++{
++#ifdef CONFIG_FEATURE_SYSTEM_VELACLAW
++    return msg->content
++        && strcmp(msg->channel, AGENT_CHAN_QUICKAPP) == 0
++        && strncmp(msg->content, FAST_TEXT_PREFIX,
++            strlen(FAST_TEXT_PREFIX)) == 0;
++#else
++    (void)msg;
++    return false;
++#endif
++}
++
+ /* Send a "working" status message on the first iteration.
+  * Skip for feishu (has its own typing indicator) and voice
+  * (TTS synthesis of a status phrase wastes time and memory). */
+@@ -1029,6 +1045,15 @@ static char* run_react_loop(const char* sys_prompt, cJSON* messages,
+     name_repeat = 0;
+     int last_total_tokens = 0;
+     bool watchdog_fired = false;
++    bool fast_text = is_fast_text_request(msg);
++    const char* request_tools = fast_text ? NULL : tools_json;
++    int request_max_tokens = fast_text ? FAST_TEXT_MAX_TOKENS : 0;
++
++    if (fast_text) {
++        syslog(LOG_INFO,
++            "[%s] Quickapp fast text mode: tools disabled, max_tokens=%d\n",
++            TAG, request_max_tokens);
++    }
+ 
+     /* Router: select and apply best backend before first LLM call.
+      * Estimate complexity from the last user message. */
+@@ -1066,7 +1091,8 @@ static char* run_react_loop(const char* sys_prompt, cJSON* messages,
+         llm_response_t resp;
+         struct timeval tv_start, tv_end;
+         gettimeofday(&tv_start, NULL);
+-        int err = llm_chat_tools(sys_prompt, messages, tools_json, &resp);
++        int err = llm_chat_tools_limited(sys_prompt, messages,
++            request_tools, request_max_tokens, &resp);
+         gettimeofday(&tv_end, NULL);
+         uint32_t latency_ms = calc_elapsed_ms(&tv_start, &tv_end);
+ 
+@@ -1084,8 +1110,8 @@ static char* run_react_loop(const char* sys_prompt, cJSON* messages,
+                 trace.backend_idx = next_idx;
+                 llm_response_free(&resp);
+                 gettimeofday(&tv_start, NULL);
+-                err = llm_chat_tools(sys_prompt, messages,
+-                    tools_json, &resp);
++                err = llm_chat_tools_limited(sys_prompt, messages,
++                    request_tools, request_max_tokens, &resp);
+                 gettimeofday(&tv_end, NULL);
+                 latency_ms = calc_elapsed_ms(&tv_start, &tv_end);
+             }
+diff --git a/src/llm/llm_proxy.c b/src/llm/llm_proxy.c
+index 48157cc..232cc6f 100644
+--- a/src/llm/llm_proxy.c
++++ b/src/llm/llm_proxy.c
+@@ -682,8 +682,9 @@ int llm_chat(const char* system_prompt, const char* messages_json,
+ /* ── Public: chat with tools ──────────────────────────────── */
+ 
+ 
+-int llm_chat_tools(const char* system_prompt, cJSON* messages,
+-    const char* tools_json, llm_response_t* resp)
++int llm_chat_tools_limited(const char* system_prompt, cJSON* messages,
++    const char* tools_json, int max_completion_tokens,
++    llm_response_t* resp)
+ {
+     memset(resp, 0, sizeof(*resp));
+ 
+@@ -707,12 +708,17 @@ int llm_chat_tools(const char* system_prompt, cJSON* messages,
+     cJSON_AddStringToObject(body, "model",
+         model_name_for_api(model, llm_host));
+ 
++    int token_limit = max_completion_tokens > 0
++        ? max_completion_tokens
++        : (is_openai_compat_host(llm_host)
++                ? AGENT_LLM_MAX_TOKENS_OPENAI
++                : AGENT_LLM_MAX_TOKENS);
++
+     if (is_openai_compat_host(llm_host)) {
+         cJSON_AddNumberToObject(body, "max_completion_tokens",
+-            AGENT_LLM_MAX_TOKENS_OPENAI);
++            token_limit);
+     } else {
+-        cJSON_AddNumberToObject(body, "max_tokens",
+-            AGENT_LLM_MAX_TOKENS);
++        cJSON_AddNumberToObject(body, "max_tokens", token_limit);
+     }
+ 
+     /* Clone messages and prepend system message */
+@@ -907,3 +913,10 @@ int llm_chat_tools(const char* system_prompt, cJSON* messages,
+ 
+     return OK;
+ }
++
++int llm_chat_tools(const char* system_prompt, cJSON* messages,
++    const char* tools_json, llm_response_t* resp)
++{
++    return llm_chat_tools_limited(system_prompt, messages, tools_json, 0,
++        resp);
++}
+diff --git a/src/llm/llm_proxy.h b/src/llm/llm_proxy.h
+index b92d012..678b5f8 100644
+--- a/src/llm/llm_proxy.h
++++ b/src/llm/llm_proxy.h
+@@ -78,6 +78,13 @@ int llm_chat_tools(const char* system_prompt,
+     const char* tools_json,
+     llm_response_t* resp);
+ 
++/* Use a per-request completion budget. A value <= 0 keeps the default. */
++int llm_chat_tools_limited(const char* system_prompt,
++    cJSON* messages,
++    const char* tools_json,
++    int max_completion_tokens,
++    llm_response_t* resp);
++
+ /** Vision chat: send text + base64 image to a vision-capable model.
+  *  image_b64 is the raw base64 string (no data: prefix).
+  *  mime_type: "image/jpeg", "image/png", etc. NULL defaults to "image/jpeg". */
+-- 
+2.34.1
+

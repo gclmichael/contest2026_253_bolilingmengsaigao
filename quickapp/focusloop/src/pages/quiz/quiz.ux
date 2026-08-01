@@ -1,0 +1,114 @@
+<template>
+  <div class="screen">
+    <text class="eyebrow">主动回忆</text>
+    <text class="question">{{ question }}</text>
+    <div if="{{ !missingPlan }}" class="options">
+      <div class="option" onclick="choose0"><text class="option-text">{{ option0 }}</text></div>
+      <div class="option" onclick="choose1"><text class="option-text">{{ option1 }}</text></div>
+      <div class="option" onclick="choose2"><text class="option-text">{{ option2 }}</text></div>
+    </div>
+    <text class="feedback {{ correct ? 'good' : 'bad' }}">{{ feedback }}</text>
+    <a if="{{ answered || missingPlan }}" class="next" href="{{ returnHref }}">{{ returnLabel }}</a>
+  </div>
+</template>
+
+<script>
+import vibrator from '@system.vibrator';
+import store from '../../common/store.js';
+import scheduler from '../../common/scheduler.js';
+import agent from '../../common/agent.js';
+
+function safeVibrate(mode) {
+  try {
+    if (vibrator && typeof vibrator.vibrate === 'function') {
+      vibrator.vibrate({ mode, complete() {} });
+    }
+  } catch (error) {
+    console.log('FocusLoop vibration unavailable:', error);
+  }
+}
+
+export default {
+  private: {
+    state: null,
+    card: null,
+    question: '正在准备问题...',
+    option0: '',
+    option1: '',
+    option2: '',
+    feedback: '',
+    correct: false,
+    answered: false,
+    missingPlan: false,
+    returnHref: '/',
+    returnLabel: '完成',
+  },
+  async onReady() {
+    this.state = await store.load();
+    const plan = this.state.plan;
+    if (!plan) {
+      this.missingPlan = true;
+      this.question = '请先创建学习计划';
+      this.returnHref = '/pages/plan';
+      this.returnLabel = '创建计划';
+      return;
+    }
+    this.card = plan.cards.find((item) => item.id === this.state.currentCardId)
+      || scheduler.nextDueCard(plan, Date.now());
+    if (!this.card) {
+      this.missingPlan = true;
+      this.question = '暂无待回忆问题';
+      return;
+    }
+    this.question = this.card.prompt;
+    this.option0 = this.card.options[0];
+    this.option1 = this.card.options[1];
+    this.option2 = this.card.options[2];
+  },
+  choose0() { this.answer(0); },
+  choose1() { this.answer(1); },
+  choose2() { this.answer(2); },
+  async answer(index) {
+    if (this.answered || !this.card) return;
+    this.answered = true;
+    this.correct = index === this.card.answerIndex;
+    safeVibrate(this.correct ? 'short' : 'long');
+    const resultText = this.correct ? '正确。' : '再核对一次。';
+    const evidence = this.card.evidence ? ` 依据：${this.card.evidence}` : '';
+    this.feedback = `${resultText}${this.card.explanation}${evidence}`;
+
+    const now = Date.now();
+    const updatedCard = scheduler.gradeCard(this.card, this.correct, now);
+    const cards = this.state.plan.cards.map((item) => item.id === updatedCard.id ? updatedCard : item);
+    let plan = Object.assign({}, this.state.plan, {
+      cards,
+      totalAnswers: Number(this.state.plan.totalAnswers || 0) + 1,
+      correctAnswers: Number(this.state.plan.correctAnswers || 0) + (this.correct ? 1 : 0),
+    });
+    plan = scheduler.recalculatePlan(plan);
+    plan.pendingScheduleAt = updatedCard.dueAt;
+    await store.save(Object.assign({}, this.state, {
+      version: 3,
+      plan,
+      currentCardId: '',
+      lastSessionAt: this.state.lastSessionAt,
+    }));
+
+    agent.recordReview(plan, updatedCard, this.correct, updatedCard.dueAt).catch(() => {});
+  },
+};
+</script>
+
+<style>
+.screen { width: 480px; height: 480px; padding: 56px 52px 30px; flex-direction: column; background-color: #101311; color: #ffffff; }
+.eyebrow { width: 376px; font-size: 18px; text-align: center; color: #d8ff58; }
+.question { margin-top: 6px; margin-left: 18px; width: 340px; height: 68px; font-size: 24px; line-height: 30px; font-weight: 700; text-align: center; lines: 2; text-overflow: ellipsis; }
+.options { margin-top: 10px; width: 376px; flex-direction: column; }
+.option { width: 376px; height: 52px; margin-bottom: 7px; padding-left: 18px; padding-right: 18px; border-width: 1px; border-color: #3e463f; border-radius: 8px; justify-content: center; background-color: #1b201c; }
+.option-text { font-size: 19px; color: #eef1eb; lines: 1; text-overflow: ellipsis; }
+.feedback { margin-top: 2px; margin-left: 38px; width: 300px; height: 54px; font-size: 14px; line-height: 18px; text-align: center; color: #aeb5ad; lines: 3; text-overflow: ellipsis; }
+.good { color: #d8ff58; }
+.bad { color: #f6b84a; }
+.next { margin-top: 2px; margin-left: 83px; width: 210px; height: 38px; border-width: 1px; border-color: #d8ff58; border-radius: 8px; justify-content: center; align-items: center; font-size: 17px; text-align: center; color: #d8ff58; }
+.next-text { font-size: 18px; color: #d8ff58; }
+</style>
