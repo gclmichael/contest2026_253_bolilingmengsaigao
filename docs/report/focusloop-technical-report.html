@@ -1,0 +1,261 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <title>FocusLoop 技术报告</title>
+  <style>
+    @page { size: A4; margin: 0; }
+    * { box-sizing: border-box; letter-spacing: 0; }
+    html, body { margin: 0; padding: 0; background: #dfe4dd; color: #202621; font-family: "Microsoft YaHei", "Noto Sans SC", sans-serif; }
+    body { font-size: 9.2pt; line-height: 1.48; }
+    .page { width: 210mm; height: 297mm; margin: 0 auto; padding: 13mm 15mm 14mm; overflow: hidden; position: relative; background: #fff; page-break-after: always; }
+    .page:last-child { page-break-after: auto; }
+    .page::before { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 3mm; background: #d8ff58; }
+    .cover { padding: 0; background: #101311; color: #fff; }
+    .cover::before { height: 5mm; }
+    .cover-inner { height: 100%; padding: 22mm 20mm 18mm; display: flex; flex-direction: column; }
+    .cover-logo { width: 25mm; height: 25mm; border-radius: 5mm; }
+    .cover h1 { margin: 15mm 0 2mm; font-size: 40pt; line-height: 1; }
+    .cover h2 { margin: 0; color: #d8ff58; font-size: 22pt; }
+    .cover-copy { width: 155mm; margin-top: 8mm; color: #e3e8e1; font-size: 13pt; line-height: 1.65; }
+    .cover-shot { position: absolute; right: 19mm; bottom: 19mm; width: 78mm; border: 1px solid #3f4840; }
+    .cover-meta { margin-top: auto; color: #aeb7ae; font-size: 9.4pt; line-height: 1.65; }
+    .kicker { margin: 0 0 1mm; color: #35580a; font-size: 7.5pt; font-weight: 700; text-transform: uppercase; }
+    h1, h2, h3, p { margin-top: 0; }
+    h2 { margin-bottom: 4mm; color: #101311; font-size: 20pt; line-height: 1.25; }
+    h2 b { margin-right: 2mm; color: #5b7b14; }
+    h3 { margin: 3mm 0 1.6mm; font-size: 11.2pt; }
+    p { margin-bottom: 2.4mm; }
+    .lead { font-size: 11pt; line-height: 1.62; }
+    .footer { position: absolute; left: 15mm; right: 15mm; bottom: 5mm; display: flex; justify-content: space-between; color: #788079; font-size: 7.2pt; }
+    .band { margin: 3mm 0; padding: 3.5mm 4mm; border-left: 4px solid #d8ff58; background: #f1f4ef; }
+    .band.dark { color: #fff; background: #151a16; }
+    .band.dark strong { color: #d8ff58; }
+    .band.amber { border-left-color: #f6b84a; }
+    .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 4mm; }
+    .grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 3mm; }
+    .panel { padding: 3.5mm; border: 1px solid #ced5ce; background: #fff; }
+    .panel.dark { border-color: #151a16; color: #fff; background: #151a16; }
+    .panel.dark h3 { color: #d8ff58; }
+    .panel p:last-child, .panel ul:last-child { margin-bottom: 0; }
+    .metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 2.5mm; margin: 3mm 0; }
+    .metric { padding: 3.5mm 2mm; color: #fff; background: #101311; text-align: center; }
+    .metric strong { display: block; color: #d8ff58; font-size: 18pt; line-height: 1.1; }
+    .metric span { font-size: 7.8pt; }
+    table { width: 100%; margin: 2.4mm 0 3mm; border-collapse: collapse; table-layout: fixed; }
+    th, td { padding: 1.7mm 2mm; border: 1px solid #d1d8d1; text-align: left; vertical-align: top; overflow-wrap: anywhere; }
+    th { color: #d8ff58; background: #101311; }
+    tbody tr:nth-child(even) { background: #f4f6f1; }
+    td:first-child { font-weight: 700; }
+    .compact th, .compact td { padding: 1.35mm 1.7mm; font-size: 8.2pt; line-height: 1.38; }
+    ul { margin: 1.5mm 0 2mm; padding-left: 5mm; }
+    li { margin-bottom: 1.1mm; }
+    code { padding: .3mm 1mm; border-radius: 2px; background: #ebefea; font-family: Consolas, monospace; font-size: 8pt; }
+    .flow { display: grid; grid-template-columns: repeat(5, 1fr); gap: 2mm; margin: 4mm 0; }
+    .flow.four { grid-template-columns: repeat(4, 1fr); }
+    .node { min-height: 31mm; padding: 3mm; border-top: 4px solid #d8ff58; background: #151a16; color: #fff; position: relative; }
+    .node:nth-child(even) { border: 1px solid #ced5ce; border-top: 4px solid #5b7b14; background: #f4f6f1; color: #202621; }
+    .node strong { display: block; margin-bottom: 1.5mm; color: #d8ff58; font-size: 11pt; }
+    .node:nth-child(even) strong { color: #35580a; }
+    .node:not(:last-child)::after { content: "›"; position: absolute; right: -2.2mm; top: 10mm; z-index: 2; color: #79827a; font-size: 18pt; }
+    .wide-shot { display: block; width: 100%; max-height: 105mm; object-fit: contain; border: 1px solid #d1d8d1; }
+    .shot-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 3.5mm; margin-top: 2mm; }
+    figure { margin: 0; }
+    figure img { display: block; width: 100%; max-height: 84mm; object-fit: contain; border: 1px solid #d1d8d1; }
+    figcaption { margin-top: 1mm; color: #687168; font-size: 7.4pt; text-align: center; }
+    .score { color: #35580a; font-weight: 700; }
+    .check { color: #35580a; font-weight: 700; }
+    .pending { color: #9a5d00; font-weight: 700; }
+    .quote { padding: 5mm; color: #fff; background: #101311; font-size: 14pt; line-height: 1.55; }
+    .small { font-size: 8pt; color: #667068; }
+    .spacer { height: 2mm; }
+  </style>
+</head>
+<body>
+  <section class="page cover">
+    <div class="cover-inner">
+      <img class="cover-logo" src="../../quickapp/focusloop/src/common/logo.png" alt="FocusLoop logo">
+      <h1>FOCUSLOOP</h1>
+      <h2>腕上主动学习闭环</h2>
+      <p class="cover-copy">把用户材料整理成可核对的短题，在更合适的时机完成下一次复习。</p>
+      <div class="cover-meta">2026 首届 openvela AI 硬件开发者大赛<br>队伍：博丽灵梦赛高 · 编号：253<br>赛道：手表应用创新 + AI 硬件产品创新</div>
+      <img class="cover-shot" src="../screenshots/focusloop-goldfish-dashboard.png" alt="学习总览">
+    </div>
+  </section>
+
+  <section class="page">
+    <p class="kicker">作品概览</p><h2><b>01</b>作品信息与摘要</h2>
+    <table><colgroup><col style="width:22%"><col></colgroup><tbody>
+      <tr><td>作品名称</td><td>FocusLoop 腕上主动学习闭环</td></tr>
+      <tr><td>队伍名称</td><td>博丽灵梦赛高（253）</td></tr>
+      <tr><td>成员与分工</td><td>龚城立（队长）：产品定义、系统集成、测试与展示</td></tr>
+      <tr><td>参赛方向</td><td>手表应用创新 + AI 硬件产品创新</td></tr>
+      <tr><td>开源许可</td><td>Apache License 2.0</td></tr>
+    </tbody></table>
+    <h3>作品摘要（300 字以内）</h3>
+    <div class="band dark"><strong>摘要</strong><br>FocusLoop 面向学习计划难以持续、固定提醒容易打扰的问题，在 openvela 手表上打通语音或材料输入、知识题卡生成、专注、主动回忆和再次触达。大模型提取知识点并生成带原文依据的短题；本地代码负责结构校验、判分和复习调度；用户开启智能窗口后，手表结合压力、活动状态、到期时间和反馈记录选择短时复习时机。当前版本通过 26 项测试、20 轮连续测试和 5 轮连续构建，生产依赖漏洞为 0，可在模型或健康服务不可用时保持核心流程。</div>
+    <h3>评委快速定位</h3>
+    <table class="compact"><thead><tr><th style="width:23%">评分维度</th><th>报告证据</th><th style="width:14%">对应页</th></tr></thead><tbody>
+      <tr><td>技术难度 30</td><td>五层架构、Agent 协议、状态恢复、openvela 接口</td><td>4、5、8</td></tr>
+      <tr><td>创新性 20</td><td>材料依据题卡 + 情境推荐 + 用户反馈自适应</td><td>3、5、6</td></tr>
+      <tr><td>完成度 20</td><td>完整 UI 流程、RPK、连续测试与构建</td><td>7、9</td></tr>
+      <tr><td>AI 开发 10</td><td>运行时 Skill、开发验证 Skill、AI-Native 说明</td><td>8</td></tr>
+      <tr><td>商业价值 10</td><td>个人学习与机构微课的落地路径</td><td>10</td></tr>
+      <tr><td>展示效果 10</td><td>Goldfish 运行画面、演示视频、可复现证据</td><td>7、9</td></tr>
+    </tbody></table>
+    <div class="footer"><span>博丽灵梦赛高 · FocusLoop 技术报告</span><span>02</span></div>
+  </section>
+
+  <section class="page">
+    <p class="kicker">问题与创新</p><h2><b>02</b>问题、挑战与核心创新</h2>
+    <p class="lead"><strong>现实痛点：</strong>内容生成后缺少后续执行；固定提醒不理解用户是否方便；长材料难以适配几十秒的腕上交互。</p>
+    <div class="metrics"><div class="metric"><strong>5 步</strong><span>输入到再次触达</span></div><div class="metric"><strong>30 秒</strong><span>可完成的短时回忆</span></div><div class="metric"><strong>默认关闭</strong><span>情境推荐由用户选择</span></div><div class="metric"><strong>本地</strong><span>健康数据只做时机判断</span></div></div>
+    <img class="wide-shot" src="../screenshots/focusloop-overview.png" alt="FocusLoop 完整流程">
+    <h3>三项有明确增量的创新</h3>
+    <table class="compact"><thead><tr><th style="width:20%">创新</th><th style="width:31%">常见方案</th><th>FocusLoop 的增量</th></tr></thead><tbody>
+      <tr><td>可核对题卡</td><td>模型生成题目，来源不透明</td><td>每张导入题卡保留材料依据；界面同时展示解释与依据</td></tr>
+      <tr><td>情境复习窗口</td><td>只按遗忘间隔或固定时间提醒</td><td>同时检查到期、压力、活动、冷却期，条件不合适时保持安静</td></tr>
+      <tr><td>反馈自适应</td><td>统一压力阈值</td><td>用户选择“开始复习”或“稍后”，本地更新个人阈值与接受率</td></tr>
+    </tbody></table>
+    <div class="band amber"><strong>创新判断</strong><br>遗忘曲线只是记忆调度基础。FocusLoop 的新增价值在于把“复习是否到期”和“此刻是否适合打扰”分开建模，再用用户反馈逐步调整个人阈值。</div>
+    <div class="footer"><span>问题与创新</span><span>03</span></div>
+  </section>
+
+  <section class="page">
+    <p class="kicker">系统方案</p><h2><b>03</b>总体架构与运行流程</h2>
+    <div class="flow"><div class="node"><strong>输入</strong>语音主题<br>本地材料</div><div class="node"><strong>模型</strong>知识提取<br>题卡生成</div><div class="node"><strong>本地</strong>校验判分<br>进度调度</div><div class="node"><strong>情境</strong>压力 + 活动<br>反馈自适应</div><div class="node"><strong>执行</strong>cron_add<br>launch_quickapp</div></div>
+    <table class="compact"><thead><tr><th style="width:15%">层</th><th style="width:31%">关键模块</th><th>职责与降级</th></tr></thead><tbody>
+      <tr><td>输入层</td><td>PTT/ASR、本地材料收件箱</td><td>接收主题或材料；语音不可用时仍可选预设主题</td></tr>
+      <tr><td>模型层</td><td>ai_agent + FocusLoop Skill</td><td>知识提取、题卡生成、定时工具调用；超时切换离线计划</td></tr>
+      <tr><td>本地层</td><td>agent_protocol / scheduler / store</td><td>校验、判分、到期计算、状态恢复，完全可测试</td></tr>
+      <tr><td>情境层</td><td>service.health / system.sensor</td><td>用户开启后判断复习时机；能力缺失不影响核心流程</td></tr>
+      <tr><td>执行层</td><td>cron_add / launch_quickapp</td><td>持久定时并主动拉起 QuickApp</td></tr>
+    </tbody></table>
+    <div class="band"><strong>状态恢复</strong><br>下一次复习先写入本地 <code>pendingScheduleAt</code>。Agent 调度失败或应用重启后，首页继续同步；只有收到结构化 <code>scheduled:true</code> 才清除待同步状态。</div>
+    <h3>一次学习的状态流</h3>
+    <div class="quote">无计划 → 生成计划 → 单任务专注 → 主动回忆 → 更新间隔 → 持久定时 → 到期拉起 → 再次回忆</div>
+    <div class="band amber"><strong>后台边界</strong><br>应用进程驻留时，应用级监测器继续接收压力和加速度。进程被系统结束后，时间型提醒仍由 Agent 的持久定时任务保障；情境监测在应用下次运行后恢复。</div>
+    <div class="footer"><span>架构与数据流</span><span>04</span></div>
+  </section>
+
+  <section class="page">
+    <p class="kicker">AI 算法</p><h2><b>04</b>大模型链路：从材料理解到可执行题卡</h2>
+    <div class="flow four"><div class="node"><strong>材料</strong>限定本地收件箱<br>UTF-8 文本</div><div class="node"><strong>提取</strong>知识点 + 原文依据<br>3–8 张题卡</div><div class="node"><strong>校验</strong>字段 / 长度<br>选项 / 答案索引</div><div class="node"><strong>呈现</strong>问题 + 解释<br>依据可核对</div></div>
+    <table class="compact"><thead><tr><th style="width:20%">环节</th><th style="width:36%">输入 / 输出</th><th>约束</th></tr></thead><tbody>
+      <tr><td>CREATE_PLAN</td><td>主题 → 学习目标 + 3–8 张题卡</td><td>单轮快速文本模式；输出放在 focusloop-json 标签中</td></tr>
+      <tr><td>IMPORT</td><td>固定收件箱材料 → 知识点 + 题卡 + 原文依据</td><td>只读指定路径；材料不能改变工具权限或操作类型</td></tr>
+      <tr><td>本地规范化</td><td>问题、3 个选项、答案、解释、概念、依据</td><td>长度、数量、答案索引和字段类型全部检查</td></tr>
+      <tr><td>异常恢复</td><td>超时、缺字段、服务未配置</td><td>切换内置题目，专注、答题和进度保存继续可用</td></tr>
+    </tbody></table>
+    <div class="grid2">
+      <div class="panel"><h3>模型负责</h3><ul><li>理解非结构化材料</li><li>拆分可回忆知识单元</li><li>生成选项、解释和材料依据</li></ul></div>
+      <div class="panel dark"><h3>本地代码负责</h3><ul><li>校验结构和长度</li><li>判分、间隔与到期选择</li><li>状态恢复与故障隔离</li></ul></div>
+    </div>
+    <div class="band dark"><strong>模型配置</strong><br>OpenAI 兼容接口；当前测试使用 MiMo-V2.5。密钥由设备环境配置，不写入仓库、报告或构建产物。</div>
+    <div class="footer"><span>模型与题卡生成</span><span>05</span></div>
+  </section>
+
+  <section class="page">
+    <p class="kicker">情境判断</p><h2><b>05</b>情境算法：找到更合适的短时复习窗口</h2>
+    <div class="flow four"><div class="node"><strong>记忆</strong>到期或 30 分钟内<br>已有学习记录</div><div class="node"><strong>情境</strong>压力低<br>连续静止</div><div class="node"><strong>约束</strong>用户已开启<br>冷却期结束</div><div class="node"><strong>反馈</strong>开始复习 / 稍后<br>调整个人阈值</div></div>
+    <table class="compact"><thead><tr><th style="width:18%">信号</th><th style="width:48%">规则</th><th>目的</th></tr></thead><tbody>
+      <tr><td>用户选择</td><td>智能推荐默认关闭，开启后才订阅数据</td><td>把控制权交给用户</td></tr>
+      <tr><td>记忆状态</td><td>至少完成一次学习；题卡已到期或 30 分钟内到期</td><td>只推荐真实需要复习的内容</td></tr>
+      <tr><td>压力</td><td>低于个人阈值，初始值 25，限制在 15–35</td><td>避开压力较高时刻</td></tr>
+      <tr><td>活动</td><td>至少 6 个加速度采样显示连续静止</td><td>避开走路或运动</td></tr>
+      <tr><td>节流</td><td>每次推荐后进入 30 分钟冷却</td><td>减少连续打扰</td></tr>
+      <tr><td>反馈</td><td>开始复习 / 稍后，以 80/20 平滑更新阈值</td><td>逐步适应个人接受习惯</td></tr>
+    </tbody></table>
+    <img class="wide-shot" style="max-height:78mm" src="../screenshots/focusloop-smart-overview.png" alt="智能复习窗口">
+    <div class="band amber"><strong>数据边界</strong><br>压力与加速度只在本地判断时机，不进入模型，也不用于医疗结论。数据不足、高压力、运动中或冷却未结束时，应用保持安静。</div>
+    <div class="footer"><span>情境感知与自适应</span><span>06</span></div>
+  </section>
+
+  <section class="page">
+    <p class="kicker">产品实现</p><h2><b>06</b>软件实现与腕上交互</h2>
+    <p class="lead">界面针对 466×466 圆形表盘设计。每页保留一个主动作，状态文字短而明确，常用流程可在数次点击内完成。</p>
+    <div class="shot-grid">
+      <figure><img src="../screenshots/focusloop-goldfish-plan.png" alt="计划页"><figcaption>计划页：语音、预设主题、材料导入</figcaption></figure>
+      <figure><img src="../screenshots/focusloop-goldfish-focus.png" alt="专注页"><figcaption>专注页：15 / 25 / 40 分钟单任务计时</figcaption></figure>
+      <figure><img src="../screenshots/focusloop-goldfish-quiz.png" alt="答题页"><figcaption>答题页：三选一主动回忆</figcaption></figure>
+      <figure><img src="../screenshots/focusloop-goldfish-dashboard.png" alt="首页"><figcaption>首页：进度、下一次到期和立即复习</figcaption></figure>
+    </div>
+    <table class="compact"><thead><tr><th style="width:17%">页面</th><th style="width:37%">主要动作</th><th>异常状态</th></tr></thead><tbody>
+      <tr><td>计划</td><td>语音主题、预设主题、导入材料</td><td>ASR 或模型不可用时给出状态并启用离线题目</td></tr>
+      <tr><td>专注</td><td>开始 / 暂停 / 完成</td><td>振动能力缺失不阻断计时</td></tr>
+      <tr><td>答题</td><td>选择答案、查看解释和依据</td><td>进度先本地保存，再同步 Agent 定时</td></tr>
+      <tr><td>智能窗口</td><td>开启、开始复习、稍后</td><td>健康能力缺失时单页降级</td></tr>
+    </tbody></table>
+    <div class="footer"><span>界面与交互</span><span>07</span></div>
+  </section>
+
+  <section class="page">
+    <p class="kicker">平台集成</p><h2><b>07</b>openvela 深度集成与开发方法</h2>
+    <table class="compact"><thead><tr><th style="width:24%">openvela 能力</th><th style="width:44%">使用方式</th><th>产品价值</th></tr></thead><tbody>
+      <tr><td>system.velaclaw</td><td>QuickApp 向 ai_agent 发送计划、语音、调度请求</td><td>把腕上交互接入 Agent</td></tr>
+      <tr><td>ai_agent Skill</td><td>约束 SCHEDULE / REVIEW / IMPORT 的工具与文件范围</td><td>把模型输出转成受控系统动作</td></tr>
+      <tr><td>cron_add</td><td>保存一次性复习任务并用 cron_list 去重</td><td>应用退出后仍能按时执行</td></tr>
+      <tr><td>launch_quickapp</td><td>到期主动打开 FocusLoop</td><td>减少用户重新寻找入口的成本</td></tr>
+      <tr><td>service.health</td><td>读取实时压力样本</td><td>为低打扰时机提供设备信号</td></tr>
+      <tr><td>system.sensor</td><td>连续读取加速度并判断静止</td><td>避开运动中的提醒</td></tr>
+      <tr><td>system.storage</td><td>保存计划、卡片间隔、待同步任务和偏好</td><td>支持重启恢复</td></tr>
+    </tbody></table>
+    <h3>两个可复用 Skill</h3>
+    <div class="grid2">
+      <div class="panel"><h3>FocusLoop runtime Skill</h3><p>规定导入、复习与调度操作，验证真实工具结果。其他 Agent 应用可复用受控调度和本地收件箱模式。</p></div>
+      <div class="panel dark"><h3>focusloop-verify</h3><p>测试、构建、漏洞、RPK、敏感信息和文案检查。评审前一条命令完成核对，不上传、不清理历史。</p></div>
+    </div>
+    <h3>AI-Native 开发说明</h3>
+    <table class="compact"><colgroup><col style="width:27%"><col></colgroup><tbody>
+      <tr><td>AI Coding 代码占比</td><td>约 50%，以当前参赛分支新增/修改代码为口径估算；关键架构、设备联调、验收和提交内容均由参赛者复核</td></tr>
+      <tr><td>AI 编程工具</td><td>Codex：代码实现、测试、文档整理与交付检查</td></tr>
+      <tr><td>MCP 使用</td><td>未使用 VelaJS MCP；通过本地 Shell、ADB 与官方文档完成联调</td></tr>
+      <tr><td>Skills 使用</td><td>运行时 FocusLoop Skill；开发侧 focusloop-verify Skill</td></tr>
+      <tr><td>Token 使用量</td><td>MiMo：2,193,625,712+ Token；GPT：辅助使用，未统计</td></tr>
+    </tbody></table>
+    <div class="footer"><span>openvela 与 AI-Native</span><span>08</span></div>
+  </section>
+
+  <section class="page">
+    <p class="kicker">测试验证</p><h2><b>08</b>量化测试、性能与可靠性</h2>
+    <div class="metrics"><div class="metric"><strong>26/26</strong><span>单轮测试</span></div><div class="metric"><strong>20/20</strong><span>连续测试</span></div><div class="metric"><strong>5/5</strong><span>连续构建</span></div><div class="metric"><strong>0</strong><span>生产依赖漏洞</span></div></div>
+    <table class="compact"><thead><tr><th style="width:21%">测试类别</th><th style="width:53%">环境与方法</th><th>结果</th></tr></thead><tbody>
+      <tr><td>功能测试</td><td>协议解析、提示词边界、复习算法、导入、语音、情境判断和页面约束</td><td>26 项全部通过</td></tr>
+      <tr><td>重复稳定性</td><td>Windows 11 / Node 24.14.1；连续运行 20 轮测试</td><td>共 520 项检查，0 项失败</td></tr>
+      <tr><td>构建稳定性</td><td>AIoT Toolkit 2.0.5；连续运行 5 轮 debug 构建</td><td>5/5 成功</td></tr>
+      <tr><td>制品</td><td>debug RPK + SHA-256</td><td>约 72.4 KB；制品与哈希位于仓库 <code>artifacts/</code></td></tr>
+      <tr><td>依赖安全</td><td><code>npm audit --omit=dev</code></td><td>0 个生产依赖漏洞</td></tr>
+      <tr><td>Goldfish</td><td>Ubuntu 22.04，xiaomi_watch_s1 / arm64 Goldfish</td><td>3561 个目标构建完成；核心页面与离线链路已运行</td></tr>
+    </tbody></table>
+    <h3>故障隔离矩阵</h3>
+    <table class="compact"><thead><tr><th style="width:25%">能力不可用</th><th style="width:32%">受影响部分</th><th>仍可用部分</th></tr></thead><tbody>
+      <tr><td>模型 / 网络</td><td>新主题的在线生成</td><td>内置题目、专注、答题、进度保存</td></tr>
+      <tr><td>语音 / ASR</td><td>语音主题输入</td><td>预设主题和材料导入</td></tr>
+      <tr><td>service.health</td><td>情境推荐</td><td>时间型复习与完整学习流程</td></tr>
+      <tr><td>Agent 调度暂时失败</td><td>主动拉起等待重试</td><td>pendingScheduleAt 保留，首页恢复同步</td></tr>
+    </tbody></table>
+    <div class="band amber"><strong>尚待设备侧补测</strong><br>真实手表的内存、功耗、ASR 端到端延迟，以及带健康服务镜像的压力订阅运行数据。报告不把编译或 Mock 数据写成真机结论。</div>
+    <div class="footer"><span>测试与可靠性</span><span>09</span></div>
+  </section>
+
+  <section class="page">
+    <p class="kicker">应用价值</p><h2><b>09</b>目标用户、验证计划与当前边界</h2>
+    <table><thead><tr><th style="width:22%">首批场景</th><th style="width:40%">目标用户</th><th>可验证价值</th></tr></thead><tbody>
+      <tr><td>语言与认证备考</td><td>需要高频短时回忆的学生与职场人</td><td>复习完成率、次日留存、7 日留存</td></tr>
+      <tr><td>技术知识复习</td><td>开发者、工程师、实验室成员</td><td>把个人文档快速转成可复习题卡</td></tr>
+      <tr><td>企业微课</td><td>需要岗位知识与安全规范训练的机构</td><td>课程材料统一下发，腕上完成低打扰训练</td></tr>
+    </tbody></table>
+    <h3>两周验证路线</h3>
+    <table class="compact"><thead><tr><th style="width:19%">阶段</th><th style="width:50%">工作</th><th>指标</th></tr></thead><tbody>
+      <tr><td>两周试用</td><td>20–50 名校内用户完成真实学习任务</td><td>建议接受率、复习完成率、次日与 7 日留存</td></tr>
+      <tr><td>设备验收</td><td>miwear 健康镜像与兼容手表联调</td><td>压力订阅稳定性、误打扰率、功耗</td></tr>
+      <tr><td>内容质量</td><td>抽检材料生成的题卡、答案和依据</td><td>材料转卡成功率、题卡人工通过率</td></tr>
+      <tr><td>继续投入条件</td><td>根据试用和真机数据决定是否扩展机构课程</td><td>接受率、完成率与留存达到预设目标</td></tr>
+    </tbody></table>
+    <h3>当前限制</h3>
+    <ul><li>材料导入目前通过 ADB 推送到固定收件箱，面向普通用户的文件选择器需要后续设备 API 支持。</li><li>情境模型当前使用轻量规则与反馈调整，尚未用真实用户数据训练；先保证可解释、可关闭和不打扰。</li><li>后台情境监测依赖应用进程驻留；进程结束后只保留持久的时间型提醒。</li></ul>
+    <div class="band dark"><strong>落地判断</strong><br>先用真实学习任务验证题卡质量、建议接受率、复习完成率和留存。数据成立后，再扩展课程管理和机构部署，避免在缺少用户证据时提前堆叠商业功能。</div>
+    <div class="footer"><span>应用价值与验证计划</span><span>10</span></div>
+  </section>
+</body>
+</html>

@@ -1,0 +1,39 @@
+name: FocusLoop CI
+
+on:
+  push:
+    paths:
+      - 'quickapp/focusloop/**'
+      - 'scripts/**'
+      - '.github/workflows/focusloop-ci.yml'
+  pull_request:
+    paths:
+      - 'quickapp/focusloop/**'
+      - 'scripts/**'
+      - '.github/workflows/focusloop-ci.yml'
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: quickapp/focusloop
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: quickapp/focusloop/package-lock.json
+      - run: npm ci
+      - run: npm test
+      - run: npm run build
+      - run: npm audit --omit=dev
+      - name: Check shell scripts
+        working-directory: .
+        run: bash -n scripts/*.sh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: focusloop-debug-rpk
+          path: quickapp/focusloop/dist/com.openvela.focusloop.debug.0.1.0.rpk
+          if-no-files-found: error

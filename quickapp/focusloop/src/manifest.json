@@ -1,0 +1,38 @@
+{
+  "package": "com.openvela.focusloop",
+  "name": "FocusLoop",
+  "versionName": "0.1.0",
+  "versionCode": 1,
+  "minPlatformVersion": 1000,
+  "icon": "/common/logo.png",
+  "deviceTypeList": [
+    "watch"
+  ],
+  "features": [
+    { "name": "system.storage" },
+    { "name": "system.velaclaw" },
+    { "name": "system.vibrator" },
+    { "name": "system.sensor" },
+    { "name": "service.health" }
+  ],
+  "permissions": [
+    { "name": "hapjs.permission.HEALTH" }
+  ],
+  "config": {
+    "logLevel": "log",
+    "designWidth": 480,
+    "background": {
+      "features": ["service.health"]
+    }
+  },
+  "router": {
+    "entry": "pages/home",
+    "pages": {
+      "pages/home": { "component": "home" },
+      "pages/plan": { "component": "plan" },
+      "pages/focus": { "component": "focus" },
+      "pages/quiz": { "component": "quiz" },
+      "pages/context": { "component": "context" }
+    }
+  }
+}

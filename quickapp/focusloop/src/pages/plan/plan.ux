@@ -1,0 +1,147 @@
+<template>
+  <div class="screen">
+    <text class="title">创建学习闭环</text>
+    <text class="label">当前主题</text>
+    <div class="topic-display"><text class="topic-text">{{ topic }}</text></div>
+
+    <div class="presets">
+      <div class="preset" onclick="useOpenvela"><text class="preset-text">openvela 架构</text></div>
+      <div class="preset" onclick="useEnglish"><text class="preset-text">英语表达</text></div>
+    </div>
+
+    <div class="sources">
+      <div class="source {{ voiceActive ? 'recording' : '' }}" onclick="toggleVoice">
+        <text class="source-text">{{ voiceActive ? '完成语音' : '语音输入' }}</text>
+      </div>
+      <div class="source" onclick="importMaterial"><text class="source-text">导入材料</text></div>
+    </div>
+
+    <text class="label duration-label">单次专注</text>
+    <div class="durations">
+      <div class="duration {{ minutes === 15 ? 'selected' : '' }}" onclick="set15"><text class="duration-text {{ minutes === 15 ? 'selected-text' : '' }}">15</text></div>
+      <div class="duration {{ minutes === 25 ? 'selected' : '' }}" onclick="set25"><text class="duration-text {{ minutes === 25 ? 'selected-text' : '' }}">25</text></div>
+      <div class="duration {{ minutes === 40 ? 'selected' : '' }}" onclick="set40"><text class="duration-text {{ minutes === 40 ? 'selected-text' : '' }}">40</text></div>
+    </div>
+
+    <div class="primary" onclick="generate">
+      <text class="primary-text">{{ loading ? 'AI 规划中...' : '生成计划' }}</text>
+    </div>
+    <a if="{{ ready }}" class="next" href="/">查看计划</a>
+    <text class="status">{{ status }}</text>
+  </div>
+</template>
+
+<script>
+import agent from '../../common/agent.js';
+import store from '../../common/store.js';
+
+export default {
+  private: {
+    topic: 'openvela 核心架构',
+    minutes: 25,
+    loading: false,
+    importing: false,
+    voiceActive: false,
+    ready: false,
+    status: '',
+  },
+  onDestroy() {
+    if (!this.voiceActive) return;
+    this.voiceActive = false;
+    agent.stopVoiceInput().catch(() => {});
+  },
+  useOpenvela() { this.topic = 'openvela 核心架构'; },
+  useEnglish() { this.topic = '技术英语表达'; },
+  set15() { this.minutes = 15; },
+  set25() { this.minutes = 25; },
+  set40() { this.minutes = 40; },
+  async savePlan(plan) {
+    const state = await store.load();
+    await store.save(Object.assign({}, state, {
+      version: 3,
+      plan,
+      currentCardId: '',
+      lastSessionAt: 0,
+    }));
+  },
+  async toggleVoice() {
+    if (this.loading || this.importing) return;
+    if (!this.voiceActive) {
+      this.status = '正在启动语音输入';
+      try {
+        await agent.startVoiceInput();
+        this.voiceActive = true;
+        this.status = '请说出学习主题，再点完成';
+      } catch (error) {
+        this.status = '语音服务暂不可用';
+      }
+      return;
+    }
+    this.status = '正在识别';
+    try {
+      this.topic = await agent.stopVoiceInput();
+      this.status = '已识别学习主题';
+    } catch (error) {
+      this.status = '没有识别到有效内容';
+    }
+    this.voiceActive = false;
+  },
+  async importMaterial() {
+    if (this.loading || this.importing || this.voiceActive) return;
+    this.importing = true;
+    this.ready = false;
+    this.status = '正在读取导入材料';
+    try {
+      const plan = await agent.importPlan(this.minutes);
+      await this.savePlan(plan);
+      this.topic = plan.topic;
+      this.status = `已生成 ${plan.cards.length} 张词卡`;
+      this.ready = true;
+    } catch (error) {
+      this.status = '未找到材料或生成失败';
+    }
+    this.importing = false;
+  },
+  async generate() {
+    if (this.loading || !this.topic.trim()) return;
+    this.loading = true;
+    this.ready = false;
+    this.status = '正在连接端侧 Agent';
+    try {
+      const plan = await agent.createPlan(this.topic.trim(), this.minutes);
+      await this.savePlan(plan);
+      this.status = plan.source === 'agent' ? '计划已生成' : '已启用离线计划';
+      this.ready = true;
+    } catch (error) {
+      this.status = '保存失败，请重试';
+    }
+    this.loading = false;
+  },
+};
+</script>
+
+<style>
+.screen { width: 480px; height: 480px; padding: 34px 58px 24px; flex-direction: column; background-color: #101311; color: #f4f6f0; }
+.title { width: 364px; font-size: 30px; font-weight: 700; text-align: center; color: #ffffff; }
+.label { margin-top: 8px; font-size: 17px; color: #9da49d; }
+.topic-display { margin-top: 4px; width: 364px; height: 44px; padding-left: 16px; padding-right: 16px; border-width: 1px; border-color: #424a43; border-radius: 8px; background-color: #1c211d; justify-content: center; }
+.topic-text { font-size: 20px; color: #ffffff; lines: 1; text-overflow: ellipsis; }
+.presets { margin-top: 6px; height: 34px; flex-direction: row; justify-content: space-between; }
+.preset { width: 174px; height: 34px; border-radius: 8px; background-color: #242a25; justify-content: center; align-items: center; font-size: 16px; color: #cdd2cb; }
+.preset-text { font-size: 16px; color: #cdd2cb; }
+.sources { margin-top: 8px; height: 40px; flex-direction: row; justify-content: space-between; }
+.source { width: 174px; height: 40px; border-width: 1px; border-color: #566158; border-radius: 8px; justify-content: center; align-items: center; }
+.source-text { font-size: 17px; color: #d8ff58; }
+.recording { border-color: #f6b84a; background-color: #332715; }
+.duration-label { margin-top: 8px; }
+.durations { margin-top: 4px; height: 38px; flex-direction: row; justify-content: space-between; }
+.duration { width: 108px; height: 38px; border-width: 1px; border-color: #3d453e; border-radius: 8px; justify-content: center; align-items: center; font-size: 19px; color: #aab1aa; }
+.duration-text { font-size: 20px; color: #aab1aa; }
+.selected { border-color: #d8ff58; background-color: #253016; color: #d8ff58; }
+.selected-text { color: #d8ff58; }
+.primary { margin-top: 10px; width: 364px; height: 48px; border-radius: 8px; background-color: #d8ff58; justify-content: center; align-items: center; }
+.primary-text { font-size: 22px; font-weight: 700; color: #111510; }
+.next { margin-top: 6px; width: 364px; height: 36px; border-width: 1px; border-color: #d8ff58; border-radius: 8px; justify-content: center; align-items: center; font-size: 17px; text-align: center; color: #d8ff58; }
+.next-text { font-size: 18px; color: #d8ff58; }
+.status { margin-top: 5px; height: 18px; font-size: 14px; color: #9da49d; text-align: center; }
+</style>

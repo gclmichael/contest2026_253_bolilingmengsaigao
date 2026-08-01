@@ -1,0 +1,22 @@
+{
+  "schema_version": "1.0",
+  "team_id": "contest2026_253_bolilingmengsaigao",
+  "github_login": "gclmichael",
+  "generator": "claude-code-collector@1.2.0",
+  "updated_at": "2026-08-01T05:26:07.731Z",
+  "sessions": [
+    {
+      "session_id": "444dc6cb-161b-431f-888d-d641bf9604e4",
+      "tool": "claude-code",
+      "started_at": "2026-08-01T04:33:31.545Z",
+      "last_event_at": "2026-08-01T05:26:07.704Z",
+      "event_count": 135,
+      "raw_event_count": 224,
+      "file_path": "logs/gclmichael/2026-08-01/claude-code__444dc6cb-161b-431f-888d-d641bf9604e4.jsonl",
+      "collection_mode": "cli",
+      "health": "ok",
+      "model": "mimo-v2.5-pro",
+      "events_since_notice": 0
+    }
+  ]
+}

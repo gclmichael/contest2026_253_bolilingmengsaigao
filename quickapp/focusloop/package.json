@@ -1,0 +1,21 @@
+{
+  "name": "focusloop",
+  "version": "0.1.0",
+  "private": true,
+  "license": "Apache-2.0",
+  "description": "An AI-guided focus and spaced-repetition loop for openvela watches.",
+  "engines": {
+    "node": ">=16"
+  },
+  "scripts": {
+    "start": "aiot start --watch --openVNC",
+    "build": "aiot build",
+    "release": "node -e \"const fs=require('fs');['sign/private.pem','sign/certificate.pem'].forEach(f=>{if(!fs.existsSync(f))throw new Error('Missing production signing file: '+f)})\" && aiot release",
+    "test": "node test/run.js"
+  },
+  "devDependencies": {
+    "@aiot-toolkit/jsc": "^1.0.8",
+    "@aiot-toolkit/velasim": "^0.1.26",
+    "aiot-toolkit": "2.0.5"
+  }
+}

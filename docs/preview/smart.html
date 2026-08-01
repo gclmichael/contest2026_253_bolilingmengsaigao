@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>FocusLoop 智能功能预览</title>
+  <style>
+    * { box-sizing: border-box; letter-spacing: 0; }
+    body { margin: 0; background: #e8ece7; color: #fff; font-family: "Microsoft YaHei", "Noto Sans SC", sans-serif; }
+    main { width: 1080px; height: 1080px; padding: 48px; display: grid; grid-template-columns: 466px 466px; grid-template-rows: 466px 466px; gap: 52px; }
+    .watch { width: 466px; height: 466px; overflow: hidden; border-radius: 50%; background: #101311; box-shadow: 0 14px 30px rgba(16, 19, 17, .18); }
+    .screen { width: 100%; height: 100%; padding: 35px 54px 25px; display: flex; flex-direction: column; }
+    h2, p { margin: 0; }
+    h2 { text-align: center; font-size: 29px; line-height: 38px; }
+    .label { margin-top: 7px; color: #929b93; font-size: 16px; }
+    .topic { margin-top: 4px; height: 44px; padding: 0 15px; border: 1px solid #424a43; border-radius: 8px; background: #1c211d; display: flex; align-items: center; font-size: 19px; }
+    .row { display: flex; align-items: center; justify-content: space-between; }
+    .presets, .sources { margin-top: 7px; gap: 10px; }
+    .chip, button { flex: 1; height: 36px; border: 0; border-radius: 8px; display: grid; place-items: center; font: inherit; font-size: 15px; }
+    .chip { background: #242a25; color: #cbd1ca; }
+    button { height: 40px; border: 1px solid #566158; background: transparent; color: #d8ff58; }
+    button.recording { border-color: #f6b84a; background: #332715; color: #f6b84a; }
+    .durations { margin-top: 4px; gap: 10px; }
+    .duration { flex: 1; height: 38px; border: 1px solid #3d453e; border-radius: 8px; color: #aab1aa; display: grid; place-items: center; }
+    .duration.selected { border-color: #d8ff58; background: #253016; color: #d8ff58; }
+    .primary { margin-top: 10px; width: 100%; height: 47px; border: 0; background: #d8ff58; color: #111510; font-weight: 700; font-size: 20px; }
+    .status { margin-top: 6px; color: #9da49d; font-size: 14px; text-align: center; }
+    .import-icon { width: 76px; height: 76px; margin: 42px auto 0; border: 2px solid #d8ff58; border-radius: 50%; display: grid; place-items: center; color: #d8ff58; font-size: 30px; font-weight: 700; }
+    .import-title { margin-top: 18px; text-align: center; font-size: 25px; font-weight: 700; }
+    .import-copy { width: 320px; margin: 9px auto 0; color: #aeb5ad; font-size: 16px; line-height: 23px; text-align: center; }
+    .count { margin-top: 16px; color: #d8ff58; text-align: center; font-size: 19px; }
+    .toggle-row { margin-top: 17px; height: 62px; display: flex; align-items: center; justify-content: space-between; }
+    .toggle-title { font-size: 20px; font-weight: 700; }
+    .toggle-copy { margin-top: 4px; color: #8f9890; font-size: 13px; }
+    .toggle { width: 54px; height: 30px; padding: 3px; border-radius: 15px; background: #465047; display: flex; justify-content: flex-start; }
+    .toggle.on { background: #627a2d; justify-content: flex-end; }
+    .thumb { width: 24px; height: 24px; border-radius: 50%; background: #f4f6f0; }
+    .signals { margin-top: 10px; display: flex; gap: 12px; }
+    .signal { flex: 1; height: 76px; padding: 11px 14px; border: 1px solid #3c443d; border-radius: 8px; background: #1a1f1b; }
+    .signal small { color: #8f9890; font-size: 14px; }
+    .signal strong { display: block; margin-top: 5px; font-size: 24px; }
+    .personal { margin-top: 6px; color: #8f9890; font-size: 13px; text-align: center; }
+    .decision { margin-top: 8px; height: 66px; padding: 9px 15px; border: 1px solid #4b554d; border-radius: 8px; background: #1b201c; }
+    .decision.ready { border-color: #d8ff58; background: #253016; }
+    .decision small { color: #8f9890; font-size: 13px; }
+    .decision strong { display: block; margin-top: 6px; font-size: 18px; }
+    .actions { display: flex; gap: 9px; margin-top: 8px; }
+    .review { flex: 1; height: 40px; border-radius: 8px; background: #d8ff58; color: #111510; display: grid; place-items: center; font-size: 16px; font-weight: 700; }
+    .review.secondary { border: 1px solid #566158; background: transparent; color: #cbd1ca; }
+    .note { margin-top: 4px; color: #757e77; text-align: center; font-size: 12px; }
+  </style>
+</head>
+<body>
+  <main>
+    <section class="watch"><div class="screen">
+      <h2>创建学习闭环</h2>
+      <span class="label">当前主题</span><div class="topic">数据库事务隔离级别</div>
+      <div class="row presets"><span class="chip">openvela 架构</span><span class="chip">英语表达</span></div>
+      <div class="row sources"><button class="recording">完成语音</button><button>导入材料</button></div>
+      <span class="label">单次专注</span><div class="row durations"><span class="duration">15</span><span class="duration selected">25</span><span class="duration">40</span></div>
+      <button class="primary">生成计划</button><span class="status">请说出学习主题，再点完成</span>
+    </div></section>
+
+    <section class="watch"><div class="screen">
+      <h2>导入学习材料</h2>
+      <div class="import-icon">文</div>
+      <p class="import-title">openvela 核心架构</p>
+      <p class="import-copy">Agent 已读取本地材料，并按知识点生成题目、选项和解释。</p>
+      <p class="count">已生成 6 张词卡</p>
+      <div class="review">查看学习计划</div>
+    </div></section>
+
+    <section class="watch"><div class="screen">
+      <h2>智能复习窗口</h2>
+      <div class="toggle-row"><div><p class="toggle-title">低压力时推荐</p><p class="toggle-copy">仅在你主动开启后运行</p></div><div class="toggle"><span class="thumb"></span></div></div>
+      <div class="signals"><div class="signal"><small>压力</small><strong>--</strong></div><div class="signal"><small>活动</small><strong>等待数据</strong></div></div>
+      <div class="decision"><small>当前判断</small><strong>智能推荐未开启</strong></div>
+      <p class="note">压力数据仅用于选择提醒时机</p>
+    </div></section>
+
+    <section class="watch"><div class="screen">
+      <h2>智能复习窗口</h2>
+      <div class="toggle-row"><div><p class="toggle-title">低压力时推荐</p><p class="toggle-copy">仅在你主动开启后运行</p></div><div class="toggle on"><span class="thumb"></span></div></div>
+      <div class="signals"><div class="signal"><small>压力</small><strong>18</strong></div><div class="signal"><small>活动</small><strong>静止</strong></div></div>
+      <p class="personal">个人阈值 25 · 接受率 67%</p>
+      <div class="decision ready"><small>当前判断</small><strong>当前状态适合短时复习</strong></div>
+      <div class="actions"><div class="review">开始复习</div><div class="review secondary">稍后</div></div>
+      <p class="note">反馈会调整后续推荐阈值</p>
+    </div></section>
+  </main>
+</body>
+</html>

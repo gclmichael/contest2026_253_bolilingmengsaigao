@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>FocusLoop 演示视频画面</title>
+  <style>
+    * { box-sizing: border-box; }
+    html, body { width: 1920px; height: 1080px; margin: 0; overflow: hidden; }
+    body {
+      font-family: "Microsoft YaHei", "Noto Sans CJK SC", Arial, sans-serif;
+      background: #0b0d0c;
+      color: #f5f7f3;
+      letter-spacing: 0;
+    }
+    .scene { position: relative; width: 100%; height: 100%; padding: 84px 110px 72px; }
+    .scene::before {
+      content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 14px; background: #d7ff43;
+    }
+    .topline { display: flex; align-items: center; justify-content: space-between; }
+    .brand { display: flex; align-items: center; gap: 18px; font-size: 24px; font-weight: 700; }
+    .brand-mark { width: 18px; height: 18px; background: #d7ff43; transform: rotate(45deg); }
+    .step { color: #9ca69f; font-size: 21px; }
+    .content { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(620px, .95fr); gap: 76px; height: 850px; align-items: center; }
+    .kicker { color: #d7ff43; font-size: 24px; font-weight: 700; margin-bottom: 22px; }
+    h1 { margin: 0; max-width: 900px; font-size: 70px; line-height: 1.12; font-weight: 800; }
+    .lead { max-width: 880px; margin: 30px 0 0; color: #bac1bc; font-size: 30px; line-height: 1.55; }
+    .tags { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 34px; }
+    .tag { border: 1px solid #4c554f; padding: 11px 17px; color: #dfe4df; font-size: 20px; }
+    .tag.warn { border-color: #f1a51c; color: #ffc65f; }
+    .watch-wrap { position: relative; display: flex; justify-content: center; align-items: center; }
+    .watch {
+      width: 640px; height: 640px; border-radius: 50%; background: #101311;
+      border: 3px solid #2b312d; padding: 50px; box-shadow: 0 28px 70px rgba(0,0,0,.45);
+    }
+    .watch img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; display: block; }
+    .watch-label {
+      position: absolute; right: 28px; bottom: 40px; background: #d7ff43; color: #101311;
+      padding: 12px 18px; font-size: 18px; font-weight: 800;
+    }
+    .tap {
+      position: absolute; width: 72px; height: 72px; border: 5px solid #d7ff43;
+      border-radius: 50%; box-shadow: 0 0 0 14px rgba(215,255,67,.2); transform: translate(-50%,-50%);
+    }
+    .tap::after { content: ""; position: absolute; inset: 22px; border-radius: 50%; background: #d7ff43; }
+    .flow { display: grid; gap: 15px; margin-top: 34px; }
+    .flow-item { display: grid; grid-template-columns: 58px 1fr; align-items: center; gap: 18px; }
+    .flow-num { width: 48px; height: 48px; display: grid; place-items: center; background: #d7ff43; color: #101311; font-size: 21px; font-weight: 800; }
+    .flow-copy strong { display: block; font-size: 25px; }
+    .flow-copy span { color: #9ca69f; font-size: 19px; }
+    .flow-item.active .flow-copy strong { color: #d7ff43; }
+    .flow-item.active .flow-copy span { color: #f5f7f3; }
+    .shots { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+    .shots figure { margin: 0; background: #151916; border: 1px solid #343c36; padding: 16px; }
+    .shots img { width: 100%; display: block; }
+    .shots figcaption { margin-top: 10px; color: #adb5af; font-size: 17px; }
+    .layers { display: grid; gap: 12px; margin-top: 34px; }
+    .layer { display: grid; grid-template-columns: 120px 1fr; gap: 20px; align-items: center; padding: 15px 18px; background: #151916; border-left: 5px solid #d7ff43; }
+    .layer strong { font-size: 21px; color: #d7ff43; }
+    .layer span { font-size: 22px; color: #d9ded9; }
+    .metrics { display: grid; grid-template-columns: repeat(2, 1fr); gap: 18px; margin-top: 38px; }
+    .metric { min-height: 120px; padding: 22px; background: #151916; border-top: 3px solid #d7ff43; }
+    .metric b { display: block; color: #d7ff43; font-size: 42px; line-height: 1; }
+    .metric span { display: block; margin-top: 13px; color: #aeb6b0; font-size: 18px; }
+    .evidence { width: 100%; display: grid; gap: 18px; }
+    .evidence-row { display: grid; grid-template-columns: 180px 1fr; align-items: baseline; padding: 22px 0; border-bottom: 1px solid #353c37; }
+    .evidence-row b { color: #d7ff43; font-size: 42px; }
+    .evidence-row span { font-size: 22px; color: #c2c8c3; }
+    .foot { position: absolute; left: 110px; right: 110px; bottom: 35px; display: flex; justify-content: space-between; color: #717a73; font-size: 16px; }
+  </style>
+</head>
+<body>
+<main class="scene">
+  <div class="topline">
+    <div class="brand"><span class="brand-mark"></span><span>FocusLoop · openvela 腕上学习</span></div>
+    <div class="step" id="step"></div>
+  </div>
+  <section class="content" id="content"></section>
+  <div class="foot"><span>博丽灵梦赛高 · 龚城立</span><span>本地处理学习状态与健康信号</span></div>
+</main>
+<script>
+  const root = "../screenshots/";
+  const scenes = [
+    {
+      kicker: "作品介绍", title: "把下一次复习放到手腕上", lead: "FocusLoop 将个人材料变成短题，并在到期后寻找更适合打扰的时刻。",
+      tags: ["openvela QuickApp", "MiMo 题卡生成", "腕上主动回忆"], image: "focusloop-goldfish-dashboard.png", label: "GOLDFISH 运行画面"
+    },
+    {
+      kicker: "现实痛点", title: "学习常常断在“下一次”", lead: "内容生成很容易，几小时或几天后真正回来复习更难。固定提醒也无法分辨用户正在运动、压力较高，还是恰好有一分钟空闲。",
+      tags: ["复习难持续", "提醒不看场合", "知识缺少闭环"], image: "focusloop-goldfish-focus.png", label: "25 分钟单任务"
+    },
+    {
+      kicker: "应用演示", title: "五步完成一轮学习", lead: "从输入到再次触达，每一步都有清晰结果。",
+      flow: [
+        ["01", "语音或材料输入", "说出主题，或导入 TXT / Markdown"],
+        ["02", "生成可核对题卡", "问题、选项、解释、材料依据"],
+        ["03", "单任务专注", "15 / 25 / 40 分钟"],
+        ["04", "主动回忆", "本地判分并更新间隔"],
+        ["05", "再次触达", "到期提醒或低压力窗口"]
+      ],
+      shots: [["focusloop-goldfish-plan.png", "创建计划"], ["focusloop-goldfish-focus.png", "专注"], ["focusloop-goldfish-quiz.png", "回忆"], ["focusloop-goldfish-quiz-result.png", "反馈"]]
+    },
+    {
+      kicker: "系统架构", title: "五层协同，逐层降级", lead: "模型负责内容理解，本地代码负责校验、判分、状态和执行。",
+      layers: [["输入层", "语音 · 文档"], ["模型层", "知识点 · 题卡 · 解释"], ["本地层", "结构校验 · 判分 · 间隔"], ["情境层", "压力 · 活动 · 到期时间"], ["执行层", "cron · launch_quickapp"]],
+      image: "focusloop-goldfish-fallback.png", label: "离线计划可继续"
+    },
+    {
+      kicker: "创新 01", title: "材料依据题卡", lead: "模型生成题目、答案、干扰项、解释和原文依据；应用校验字段、长度、选项数和答案索引。合格题卡才会进入计划。",
+      tags: ["来源可查", "结构可验", "可直接判分"], shots: [["focusloop-goldfish-plan.png", "选择主题或导入材料"], ["focusloop-goldfish-quiz-result.png", "答题后立即反馈"]]
+    },
+    {
+      kicker: "创新 02", title: "到期之后，再判断此刻是否合适", lead: "用户自愿开启后，本地规则检查临近到期、低压力、连续静止和冷却时间。接受或稍后会调整个人阈值。",
+      tags: ["默认关闭", "端侧判断", "反馈自适应", "压力 18 为模拟数据", "健康数据不进模型"], image: "focusloop-smart-overview.png", label: "智能复习窗口"
+    },
+    {
+      kicker: "工程证据", title: "可以复现的完成度", lead: "构建、测试、产物和运行边界都可核对。",
+      evidence: [["26", "自动化测试"], ["520", "连续检查无失败"], ["5 / 5", "连续构建成功"], ["72.4 KB", "debug RPK"]],
+      tags: ["Goldfish 核心链路已运行", "语音桥已编译链接", "健康接口待兼容真机验收"]
+    },
+    {
+      kicker: "应用价值", title: "让复习在需要且方便时发生", lead: "先从语言学习、认证备考和技术知识复习验证，再扩展到机构微课。",
+      metrics: [["接受率", "判断提醒时机是否合适"], ["完成率", "验证建议能否转化为复习"], ["留存", "验证学习闭环能否持续"], ["2 周", "首轮真实用户试用周期"]], image: "focusloop-goldfish-dashboard.png", label: "下一次复习，一步可达"
+    }
+  ];
+
+  const params = new URLSearchParams(location.search);
+  const index = Math.max(1, Math.min(scenes.length, Number(params.get("scene") || 1))) - 1;
+  const demoStep = Math.max(1, Math.min(4, Number(params.get("step") || 1)));
+  const showTap = params.get("tap") === "1";
+  const s = scenes[index];
+  document.getElementById("step").textContent = `${String(index + 1).padStart(2, "0")} / ${String(scenes.length).padStart(2, "0")}`;
+
+  const tags = s.tags ? `<div class="tags">${s.tags.map((t, i) => `<span class="tag${t.includes("待") || t.includes("模拟") ? " warn" : ""}">${t}</span>`).join("")}</div>` : "";
+  const leftExtra = s.flow ? `<div class="flow">${s.flow.map((x, i) => `<div class="flow-item${index === 2 && i === demoStep - 1 ? " active" : ""}"><span class="flow-num">${x[0]}</span><div class="flow-copy"><strong>${x[1]}</strong><span>${x[2]}</span></div></div>`).join("")}</div>`
+    : s.layers ? `<div class="layers">${s.layers.map(x => `<div class="layer"><strong>${x[0]}</strong><span>${x[1]}</span></div>`).join("")}</div>`
+    : s.evidence ? `<div class="evidence">${s.evidence.map(x => `<div class="evidence-row"><b>${x[0]}</b><span>${x[1]}</span></div>`).join("")}</div>`
+    : s.metrics ? `<div class="metrics">${s.metrics.map(x => `<div class="metric"><b>${x[0]}</b><span>${x[1]}</span></div>`).join("")}</div>` : "";
+
+  const tapPositions = [[319,453],[403,483],[320,262],[320,501]];
+  const stepShot = index === 2 && s.shots ? s.shots[demoStep - 1] : null;
+  const tap = showTap && stepShot ? `<span class="tap" style="left:${tapPositions[demoStep - 1][0]}px;top:${tapPositions[demoStep - 1][1]}px"></span>` : "";
+  const right = stepShot ? `<div class="watch-wrap"><div class="watch"><img src="${root + stepShot[0]}"></div>${tap}<div class="watch-label">操作 ${demoStep} / 4 · ${stepShot[1]}</div></div>`
+    : s.shots ? `<div class="shots">${s.shots.map(x => `<figure><img src="${root + x[0]}"><figcaption>${x[1]}</figcaption></figure>`).join("")}</div>`
+    : `<div class="watch-wrap"><div class="watch"><img src="${root + s.image}"></div><div class="watch-label">${s.label}</div></div>`;
+
+  document.getElementById("content").innerHTML = `<div><div class="kicker">${s.kicker}</div><h1>${s.title}</h1><p class="lead">${s.lead}</p>${leftExtra}${tags}</div>${right}`;
+</script>
+</body>
+</html>

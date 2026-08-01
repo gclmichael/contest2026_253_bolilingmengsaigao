@@ -1,0 +1,191 @@
+{
+  "model": "mimo-v2.5-tts",
+  "voice": "苏打",
+  "base_url": "https://token-plan-cn.xiaomimimo.com/v1",
+  "segments": [
+    {
+      "index": 1,
+      "id": "slide_01",
+      "title": "FocusLoop：腕上主动学习闭环",
+      "file": "slide_01.wav",
+      "channels": 1,
+      "sample_width": 2,
+      "sample_rate": 24000,
+      "frames": 337920,
+      "duration_seconds": 14.08,
+      "usage": {
+        "completion_tokens": 90,
+        "prompt_tokens": 227,
+        "total_tokens": 317,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 109
+        }
+      }
+    },
+    {
+      "index": 2,
+      "id": "slide_02",
+      "title": "现实问题",
+      "file": "slide_02.wav",
+      "channels": 1,
+      "sample_width": 2,
+      "sample_rate": 24000,
+      "frames": 518400,
+      "duration_seconds": 21.6,
+      "usage": {
+        "completion_tokens": 137,
+        "prompt_tokens": 232,
+        "total_tokens": 369,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 170
+        }
+      }
+    },
+    {
+      "index": 3,
+      "id": "slide_03",
+      "title": "五步学习流程",
+      "file": "slide_03.wav",
+      "channels": 1,
+      "sample_width": 2,
+      "sample_rate": 24000,
+      "frames": 587520,
+      "duration_seconds": 24.48,
+      "usage": {
+        "completion_tokens": 155,
+        "prompt_tokens": 255,
+        "total_tokens": 410,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 109
+        }
+      }
+    },
+    {
+      "index": 4,
+      "id": "slide_04",
+      "title": "五层协同架构",
+      "file": "slide_04.wav",
+      "channels": 1,
+      "sample_width": 2,
+      "sample_rate": 24000,
+      "frames": 687360,
+      "duration_seconds": 28.64,
+      "usage": {
+        "completion_tokens": 181,
+        "prompt_tokens": 265,
+        "total_tokens": 446,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 170
+        }
+      }
+    },
+    {
+      "index": 5,
+      "id": "slide_05",
+      "title": "材料依据题卡",
+      "file": "slide_05.wav",
+      "channels": 1,
+      "sample_width": 2,
+      "sample_rate": 24000,
+      "frames": 675840,
+      "duration_seconds": 28.16,
+      "usage": {
+        "completion_tokens": 178,
+        "prompt_tokens": 266,
+        "total_tokens": 444,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 110
+        }
+      }
+    },
+    {
+      "index": 6,
+      "id": "slide_06",
+      "title": "情境复习窗口",
+      "file": "slide_06.wav",
+      "channels": 1,
+      "sample_width": 2,
+      "sample_rate": 24000,
+      "frames": 698880,
+      "duration_seconds": 29.12,
+      "usage": {
+        "completion_tokens": 184,
+        "prompt_tokens": 262,
+        "total_tokens": 446,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 170
+        }
+      }
+    },
+    {
+      "index": 7,
+      "id": "slide_07",
+      "title": "工程证据",
+      "file": "slide_07.wav",
+      "channels": 1,
+      "sample_width": 2,
+      "sample_rate": 24000,
+      "frames": 602880,
+      "duration_seconds": 25.12,
+      "usage": {
+        "completion_tokens": 159,
+        "prompt_tokens": 264,
+        "total_tokens": 423,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 170
+        }
+      }
+    },
+    {
+      "index": 8,
+      "id": "slide_08",
+      "title": "应用价值",
+      "file": "slide_08.wav",
+      "channels": 1,
+      "sample_width": 2,
+      "sample_rate": 24000,
+      "frames": 391680,
+      "duration_seconds": 16.32,
+      "usage": {
+        "completion_tokens": 104,
+        "prompt_tokens": 225,
+        "total_tokens": 329,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 109
+        }
+      }
+    }
+  ],
+  "combined": {
+    "file": "FocusLoop_讲解.wav",
+    "channels": 1,
+    "sample_width": 2,
+    "sample_rate": 24000,
+    "frames": 4576080,
+    "duration_seconds": 190.67
+  }
+}

@@ -1,0 +1,14 @@
+<script>
+import contextMonitor from './common/context_monitor.js';
+
+export default {
+  onCreate() {
+    console.log('FocusLoop created');
+    contextMonitor.start().catch(() => {});
+  },
+  onDestroy() {
+    contextMonitor.stop();
+    console.log('FocusLoop destroyed');
+  },
+};
+</script>
